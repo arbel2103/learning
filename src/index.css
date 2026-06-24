@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --line-h: 32px; /* height of one ruled line */
+  --rule: #d9e2ec; /* notebook rule color (soft blue) */
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: theme('colors.cream');
+  color: theme('colors.ink');
+  font-family: theme('fontFamily.sans');
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@layer components {
+  /* Primary dark button (allbirds style) */
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium
+      transition-colors duration-150 select-none disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-ink text-cream hover:bg-black;
+  }
+  .btn-soft {
+    @apply btn bg-sand text-ink hover:bg-sand-dark;
+  }
+  .btn-ghost {
+    @apply btn text-ink hover:bg-sand;
+  }
+  .btn-icon {
+    @apply inline-flex h-8 w-8 items-center justify-center rounded-full text-muted transition-colors
+      hover:bg-sand hover:text-ink;
+  }
+  .card {
+    @apply rounded-2xl border border-line bg-paper shadow-soft;
+  }
+}
+
+/* Ruled-notebook textarea background */
+.notebook-paper {
+  line-height: var(--line-h);
+  resize: none;
+  background-image: linear-gradient(
+    to bottom,
+    transparent calc(var(--line-h) - 1px),
+    var(--rule) calc(var(--line-h) - 1px),
+    var(--rule) var(--line-h)
+  );
+  background-size: 100% var(--line-h);
+  background-attachment: local;
+}
+
+/* thin custom scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: theme('colors.sand-dark') transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: theme('colors.sand-dark');
+  border-radius: 9999px;
+  border: 2px solid theme('colors.cream');
+}

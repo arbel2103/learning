@@ -1,0 +1,20 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <rect width="256" height="256" rx="56" fill="#F7F5F0"/>
+  <g transform="translate(40 52)">
+    <!-- left page -->
+    <path d="M88 20 C70 6 40 4 14 10 C10 11 8 14 8 18 L8 150 C8 154 12 157 16 156 C40 151 68 153 88 166 Z" fill="#7C8A77"/>
+    <!-- right page -->
+    <path d="M88 20 C106 6 136 4 162 10 C166 11 168 14 168 18 L168 150 C168 154 164 157 160 156 C136 151 108 153 88 166 Z" fill="#5E6B5A"/>
+    <!-- spine -->
+    <rect x="83" y="20" width="10" height="146" rx="5" fill="#2B2A28"/>
+    <!-- page lines -->
+    <g stroke="#F7F5F0" stroke-width="5" stroke-linecap="round" opacity="0.85">
+      <line x1="26" y1="44" x2="70" y2="40"/>
+      <line x1="26" y1="66" x2="70" y2="62"/>
+      <line x1="26" y1="88" x2="70" y2="84"/>
+      <line x1="106" y1="40" x2="150" y2="44"/>
+      <line x1="106" y1="62" x2="150" y2="66"/>
+      <line x1="106" y1="84" x2="150" y2="88"/>
+    </g>
+  </g>
+</svg>
