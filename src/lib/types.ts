@@ -2,6 +2,7 @@ export interface TextBlock {
   id: string
   type: 'text'
   value: string
+  bold?: boolean
 }
 
 export interface CanvasBlock {

@@ -9,6 +9,7 @@ interface Props {
 
 export default function TextBlock({ block, lineNumbers }: Props) {
   const updateTextValue = useStore((s) => s.updateTextValue)
+  const toggleTextBold = useStore((s) => s.toggleTextBold)
   const makeBlank = useStore((s) => s.makeBlank)
   const ref = useRef<HTMLTextAreaElement>(null)
 
@@ -64,6 +65,16 @@ export default function TextBlock({ block, lineNumbers }: Props) {
     <div className="group/text relative">
       <div className="mb-1 flex flex-wrap items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover/text:opacity-100">
         <button
+          className={`rounded-md px-2 py-0.5 text-xs font-bold hover:bg-sand ${
+            block.bold ? 'bg-ink text-cream hover:bg-ink' : ''
+          }`}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => toggleTextBold(block.id)}
+          title="הדגשה (מודגש)"
+        >
+          B
+        </button>
+        <button
           className="rounded-md px-2 py-0.5 text-xs hover:bg-sand"
           onMouseDown={(e) => e.preventDefault()}
           onClick={applyBullet}
@@ -109,8 +120,8 @@ export default function TextBlock({ block, lineNumbers }: Props) {
           placeholder="כתוב כאן את הסיכום…"
           spellCheck={false}
           className={`notebook-paper min-h-[96px] w-full bg-transparent px-1 text-[17px] text-ink outline-none placeholder:text-muted/40 ${
-            lineNumbers ? 'overflow-x-auto whitespace-pre' : ''
-          }`}
+            block.bold ? 'font-bold' : ''
+          } ${lineNumbers ? 'overflow-x-auto whitespace-pre' : ''}`}
         />
       </div>
     </div>

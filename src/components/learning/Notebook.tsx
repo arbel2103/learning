@@ -23,7 +23,7 @@ function BlockShell({
   const deleteBlock = useStore((s) => s.deleteBlock)
   return (
     <div className="group/block relative rounded-lg px-1 py-1 transition-colors hover:bg-cream/60">
-      <div className="absolute start-1 top-1 z-10 flex gap-0.5 opacity-0 transition-opacity group-hover/block:opacity-100">
+      <div className="absolute left-1 top-1 z-10 flex gap-0.5 opacity-0 transition-opacity group-hover/block:opacity-100">
         <button
           className="grid h-6 w-6 place-items-center rounded-full bg-paper text-xs shadow-soft disabled:opacity-30"
           disabled={!canUp}

@@ -79,6 +79,7 @@ interface Store {
   // notebook actions operate on the currently selected subtopic
   setLineNumbers(value: boolean): void
   updateTextValue(blockId: string, value: string): void
+  toggleTextBold(blockId: string): void
   addTextBlock(): void
   addCanvasBlock(): void
   addImageBlock(blobKey: string, caption?: string): void
@@ -220,6 +221,12 @@ export const useStore = create<Store>()(
           const s = findSelectedSubtopic(d.projects, d.selection)
           const b = s?.blocks.find((x) => x.id === blockId)
           if (b && b.type === 'text') b.value = value
+        }),
+      toggleTextBold: (blockId) =>
+        set((d) => {
+          const s = findSelectedSubtopic(d.projects, d.selection)
+          const b = s?.blocks.find((x) => x.id === blockId)
+          if (b && b.type === 'text') b.bold = !b.bold
         }),
       addTextBlock: () =>
         set((d) => {
