@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# local desktop-shortcut icon (not part of the app)
+app-icon.ico
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
