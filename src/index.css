@@ -46,6 +46,12 @@ body {
   }
 }
 
+/* Faux-bold: thickens glyphs WITHOUT changing their advance width, so the
+   transparent <textarea> editing layer stays pixel-aligned with the mirror. */
+.faux-bold {
+  text-shadow: 0.35px 0 0 currentColor, -0.35px 0 0 currentColor;
+}
+
 /* Ruled-notebook textarea background */
 .notebook-paper {
   line-height: var(--line-h);

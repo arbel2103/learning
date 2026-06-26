@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import { newId } from '../lib/ids'
 import { delBlob } from './db'
-import type { Block, Project, Selection, Subtopic, Topic } from '../lib/types'
+import type { Block, BoldRange, Project, Selection, Subtopic, Topic } from '../lib/types'
 
 export const LINE_H = 32 // keep in sync with --line-h in index.css
 
@@ -43,6 +43,71 @@ function purge(keys: string[]) {
   keys.forEach((k) => void delBlob(k))
 }
 
+/* ---------- bold-range helpers (pure) ---------- */
+function normalizeRanges(ranges: BoldRange[]): BoldRange[] {
+  const clean = ranges.filter((r) => r.end > r.start).sort((a, b) => a.start - b.start)
+  const out: BoldRange[] = []
+  for (const r of clean) {
+    const last = out[out.length - 1]
+    if (last && r.start <= last.end) last.end = Math.max(last.end, r.end)
+    else out.push({ start: r.start, end: r.end })
+  }
+  return out
+}
+
+function rangesFullyCover(ranges: BoldRange[], a: number, b: number): boolean {
+  let pos = a
+  for (const r of normalizeRanges(ranges)) {
+    if (r.start > pos) return false
+    if (r.end > pos) pos = r.end
+    if (pos >= b) return true
+  }
+  return pos >= b
+}
+
+function addBold(ranges: BoldRange[], a: number, b: number): BoldRange[] {
+  return normalizeRanges([...ranges, { start: a, end: b }])
+}
+
+function removeBold(ranges: BoldRange[], a: number, b: number): BoldRange[] {
+  const out: BoldRange[] = []
+  for (const r of ranges) {
+    if (r.end <= a || r.start >= b) {
+      out.push(r)
+      continue
+    }
+    if (r.start < a) out.push({ start: r.start, end: a })
+    if (r.end > b) out.push({ start: b, end: r.end })
+  }
+  return normalizeRanges(out)
+}
+
+/** Shift bold ranges to track a single contiguous edit (typical typing/paste). */
+function shiftRangesContiguous(ranges: BoldRange[], oldV: string, newV: string): BoldRange[] {
+  if (!ranges.length || oldV === newV) return ranges
+  const minLen = Math.min(oldV.length, newV.length)
+  let p = 0
+  while (p < minLen && oldV[p] === newV[p]) p++
+  let s = 0
+  while (s < minLen - p && oldV[oldV.length - 1 - s] === newV[newV.length - 1 - s]) s++
+  const oldEnd = oldV.length - s
+  const delta = newV.length - oldV.length
+  const map = (pos: number) => {
+    if (pos <= p) return pos
+    if (pos >= oldEnd) return pos + delta
+    return p // inside replaced region — collapse to edit start
+  }
+  return normalizeRanges(ranges.map((r) => ({ start: map(r.start), end: map(r.end) })))
+}
+
+function clipShift(ranges: BoldRange[], lo: number, hi: number, shift: number): BoldRange[] {
+  return normalizeRanges(
+    ranges
+      .map((r) => ({ start: Math.max(lo, r.start) - shift, end: Math.min(hi, r.end) - shift }))
+      .filter((r) => r.end > r.start),
+  )
+}
+
 /* ---------- draft lookups (immer) ---------- */
 function findProject(projects: Project[], id: string | null) {
   return projects.find((p) => p.id === id)
@@ -79,7 +144,8 @@ interface Store {
   // notebook actions operate on the currently selected subtopic
   setLineNumbers(value: boolean): void
   updateTextValue(blockId: string, value: string): void
-  toggleTextBold(blockId: string): void
+  toggleBold(blockId: string, start: number, end: number): void
+  setText(blockId: string, value: string, bold: BoldRange[]): void
   addTextBlock(): void
   addCanvasBlock(): void
   addImageBlock(blobKey: string, caption?: string): void
@@ -220,13 +286,30 @@ export const useStore = create<Store>()(
         set((d) => {
           const s = findSelectedSubtopic(d.projects, d.selection)
           const b = s?.blocks.find((x) => x.id === blockId)
-          if (b && b.type === 'text') b.value = value
+          if (b && b.type === 'text') {
+            if (b.bold && b.bold.length) b.bold = shiftRangesContiguous(b.bold, b.value, value)
+            b.value = value
+          }
         }),
-      toggleTextBold: (blockId) =>
+      toggleBold: (blockId, start, end) =>
+        set((d) => {
+          if (start === end) return
+          const s = findSelectedSubtopic(d.projects, d.selection)
+          const b = s?.blocks.find((x) => x.id === blockId)
+          if (!b || b.type !== 'text') return
+          const cur = Array.isArray(b.bold) ? b.bold : []
+          b.bold = rangesFullyCover(cur, start, end)
+            ? removeBold(cur, start, end)
+            : addBold(cur, start, end)
+        }),
+      setText: (blockId, value, bold) =>
         set((d) => {
           const s = findSelectedSubtopic(d.projects, d.selection)
           const b = s?.blocks.find((x) => x.id === blockId)
-          if (b && b.type === 'text') b.bold = !b.bold
+          if (b && b.type === 'text') {
+            b.value = value
+            b.bold = normalizeRanges(bold)
+          }
         }),
       addTextBlock: () =>
         set((d) => {
@@ -303,7 +386,16 @@ export const useStore = create<Store>()(
           const start = Math.max(0, Math.min(startLine, lines.length - 1))
           const end = Math.max(start, Math.min(endLine, lines.length - 1))
           const count = end - start + 1
-          const before: Block = { id: newId(), type: 'text', value: lines.slice(0, start).join('\n') }
+          const cur = Array.isArray(blk.bold) ? blk.bold : []
+          const beforeVal = lines.slice(0, start).join('\n')
+          const afterVal = lines.slice(end + 1).join('\n')
+          const afterStart = blk.value.length - afterVal.length
+          const before: Block = {
+            id: newId(),
+            type: 'text',
+            value: beforeVal,
+            bold: clipShift(cur, 0, beforeVal.length, 0),
+          }
           const canvas: Block = {
             id: newId(),
             type: 'canvas',
@@ -311,7 +403,12 @@ export const useStore = create<Store>()(
             imageKey: 'canvas-' + newId(),
             rev: 0,
           }
-          const after: Block = { id: newId(), type: 'text', value: lines.slice(end + 1).join('\n') }
+          const after: Block = {
+            id: newId(),
+            type: 'text',
+            value: afterVal,
+            bold: clipShift(cur, afterStart, blk.value.length, afterStart),
+          }
           s.blocks.splice(idx, 1, before, canvas, after)
         }),
       restoreLines: (canvasBlockId) =>

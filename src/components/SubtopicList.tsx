@@ -10,6 +10,7 @@ interface Props {
   topic: Topic
 }
 
+/** Vertical menu of a topic's subtopics, ending with an "add" row. */
 export default function SubtopicList({ projectId, topic }: Props) {
   const selectedSubtopicId = useStore((s) => s.selection.subtopicId)
   const selectedTopicId = useStore((s) => s.selection.topicId)
@@ -25,45 +26,46 @@ export default function SubtopicList({ projectId, topic }: Props) {
   const confirmSub = topic.subtopics.find((s) => s.id === confirmId)
 
   return (
-    <div className="flex flex-wrap items-center gap-2 border-t border-line/70 py-2.5">
-      <span className="text-xs font-medium text-muted">תתי-נושאים:</span>
+    <div className="flex w-52 flex-col">
       {topic.subtopics.length === 0 && (
-        <span className="text-xs text-muted">עדיין אין — הוסיפו אחד 👇</span>
+        <span className="px-3 py-1.5 text-xs text-muted">עדיין אין תתי-נושאים</span>
       )}
+
       {topic.subtopics.map((s) => {
         const active = s.id === selectedSubtopicId && topic.id === selectedTopicId
         if (editingId === s.id) {
           return (
-            <InlineRename
-              key={s.id}
-              value={s.name}
-              onSubmit={(v) => {
-                renameSubtopic(projectId, topic.id, s.id, v)
-                setEditingId(null)
-              }}
-              onCancel={() => setEditingId(null)}
-            />
+            <div key={s.id} className="px-1 py-0.5">
+              <InlineRename
+                value={s.name}
+                onSubmit={(v) => {
+                  renameSubtopic(projectId, topic.id, s.id, v)
+                  setEditingId(null)
+                }}
+                onCancel={() => setEditingId(null)}
+                className="w-full rounded-md border border-sage bg-paper px-2 py-1 text-sm outline-none"
+              />
+            </div>
           )
         }
         return (
           <div
             key={s.id}
-            className={`group flex items-center gap-1 rounded-full border px-1 text-sm transition-colors ${
-              active
-                ? 'border-sage bg-sage text-cream'
-                : 'border-line bg-paper text-ink hover:bg-sand'
+            className={`group/sub flex items-center gap-1 rounded-lg px-1 transition-colors ${
+              active ? 'bg-sage text-cream' : 'hover:bg-sand'
             }`}
           >
             <button
-              className="px-2.5 py-1 font-medium"
+              className="flex-1 truncate px-2 py-1.5 text-start text-sm font-medium"
               onClick={() => selectSubtopic(topic.id, s.id)}
+              title={s.name}
             >
               {s.name}
             </button>
             <button
               title="שנה שם"
-              className={`grid h-5 w-5 place-items-center rounded-full text-[11px] ${
-                active ? 'hover:bg-white/25' : 'opacity-0 hover:bg-sand-dark group-hover:opacity-100'
+              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] ${
+                active ? 'hover:bg-white/25' : 'opacity-0 hover:bg-sand-dark group-hover/sub:opacity-100'
               }`}
               onClick={() => setEditingId(s.id)}
             >
@@ -71,8 +73,8 @@ export default function SubtopicList({ projectId, topic }: Props) {
             </button>
             <button
               title="מחק תת-נושא"
-              className={`grid h-5 w-5 place-items-center rounded-full text-[11px] ${
-                active ? 'hover:bg-white/25' : 'opacity-0 hover:bg-sand-dark group-hover:opacity-100'
+              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] ${
+                active ? 'hover:bg-white/25' : 'opacity-0 hover:bg-sand-dark group-hover/sub:opacity-100'
               }`}
               onClick={() => setConfirmId(s.id)}
             >
@@ -81,11 +83,12 @@ export default function SubtopicList({ projectId, topic }: Props) {
           </div>
         )
       })}
+
       <button
-        className="rounded-full border border-dashed border-sage px-2.5 py-1 text-sm text-sage-dark hover:bg-sage/10"
+        className="mt-0.5 rounded-lg px-3 py-1.5 text-start text-sm text-sage-dark hover:bg-sage/10"
         onClick={() => setAddOpen(true)}
       >
-        ＋ תת-נושא
+        ＋ הוסף תת-נושא
       </button>
 
       <NamePrompt

@@ -1,8 +1,14 @@
+/** A character range (within a text block's value) rendered in bold. */
+export interface BoldRange {
+  start: number
+  end: number
+}
+
 export interface TextBlock {
   id: string
   type: 'text'
   value: string
-  bold?: boolean
+  bold?: BoldRange[]
 }
 
 export interface CanvasBlock {
